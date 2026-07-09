@@ -1,6 +1,5 @@
 package tests;
 
-import io.github.bonigarcia.wdm.WebDriverManager;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
@@ -28,9 +27,16 @@ public class BillpayTests {
 
     @BeforeMethod
     public void setUp() {
-        WebDriverManager.chromedriver().setup();
         ChromeOptions options = new ChromeOptions();
-        options.addArguments("--start-maximized", "--disable-notifications");
+        // On CI (GitHub Actions sets CI=true) there is no display, so run headless.
+        // Locally it stays headful so you can watch; force headless with -Dheadless=true.
+        boolean headless = System.getenv("CI") != null || Boolean.getBoolean("headless");
+        if (headless) {
+            options.addArguments("--headless=new", "--no-sandbox",
+                    "--disable-dev-shm-usage", "--disable-gpu");
+        }
+        options.addArguments("--window-size=1920,1080", "--disable-notifications", "--remote-allow-origins=*");
+        // Selenium Manager (built into Selenium 4) auto-provisions the matching driver.
         driver = new ChromeDriver(options);
         wait = new WebDriverWait(driver, Duration.ofSeconds(15));
         parabankPage = new ParabankPage(driver);
